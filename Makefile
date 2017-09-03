@@ -8,4 +8,7 @@ DPADD+=${LIBUTIL}
 
 CLEANFILES+=	*~
 
+test:
+	echo aa
+
 .include <bsd.prog.mk>

@@ -24,6 +24,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/rbtree.h>
+
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,16 +35,21 @@
 #include <util.h>
 
 char *fname;
+uint32_t LC; // location counter
+FILE *fp;
 
 __dead void usage(void);
+void pass1(void);
 
 int
 main(int argc, char **argv)
 {
 	int ch;
 
+	// Store the program name
 	setprogname(argv[0]);
 
+	// Parse command line arguments
 	while ((ch = getopt(argc, argv, "hf:")) != -1) {
 		switch (ch) {
 		case 'f':
@@ -55,8 +64,23 @@ main(int argc, char **argv)
 		}
 	}
 
+	// The input filename is mandatory
 	if (!fname)
 		usage();
+
+	// Open the input file
+	fp = efopen(fname, "r");
+
+	// Pass 1
+	// Create label and symbol table
+	// Assert syntax correctness
+	pass1();
+
+	// Rewind the file pointer and prepare for the sequent pass
+	rewind(fp);
+
+	// Pass 2
+	pass2();
 
 	return EXIT_SUCCESS;
 }
@@ -65,4 +89,71 @@ void
 usage(void)
 {
 	errx(EXIT_SUCCESS, "Usage: %s [-h] [-f file]", getprogname());
+}
+
+void
+pass1(void)
+{
+	bool finish = false; // Whether parsed the end statement
+	size_t linelen;
+	char *line;
+
+	// Begin pass 1
+
+	// Initialize location counter to zero
+	LC = 0;
+
+	do {
+		// read next line from source program
+		if ((line = fgetln(fp, &len)) == null)
+			break;
+
+		// analyze line for syntax
+		/*
+		 * Grammar
+		 * =======
+		 *
+		 * expression =
+		 * 	instruction
+		 *	| data
+		 *	| symbol
+		 *	| control
+		 *
+		 * instruction =
+		 *	label opcode operands comment
+		 *
+		 * label =
+		 *	label1
+		 *	| (epsilon)
+		 *
+		 * operands
+		 *	operand1
+		 *	| operand1 ',' operands
+		 *
+		 * data =
+		 *	label type
+		 *
+		 * symbol =
+		 *	symbol_name '=' constant
+		 *
+		 * constant =
+		 *	decimal_number
+		 *	| unary_number
+		 *	| expression
+		 *
+		 * control =
+		 *	title module_name comment
+		 *	| sbttl comment
+		 *	| entry procedure_name ',' register_mask
+		 *	| end label
+		 */ 
+
+		
+	} while (finish);
+
+	// Assert that there were no errors when reading from a file
+	if (ferror(stream))
+		err(EXIT_FAILURE, "ferror");
+
+	;
 }
